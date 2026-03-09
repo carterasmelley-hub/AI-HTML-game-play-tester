@@ -424,18 +424,44 @@ async function rewriteCss(text, baseDir, resolveReference) {
 }
 
 async function rewriteJs(text, baseDir, resolveReference) {
-  return replaceAsync(text, /(["'`])([^"'`\n\r]+)\1/g, async (fullMatch, quote, value) => {
-    if (!isRelativeAssetPath(value)) {
-      return fullMatch;
-    }
+  return replaceAsync(
+    text,
+    /(["'`])((?:\\.|(?!\1)[^\\\n\r])*)\1/g,
+    async (fullMatch, quote, value) => {
+      if (!isLikelyRelativeScriptAssetPath(value)) {
+        return fullMatch;
+      }
 
-    const resolved = await resolveReference(value, baseDir);
-    if (resolved === value) {
-      return fullMatch;
-    }
+      const resolved = await resolveReference(value, baseDir);
+      if (resolved === value) {
+        return fullMatch;
+      }
 
-    return `${quote}${resolved}${quote}`;
-  });
+      return `${quote}${resolved}${quote}`;
+    }
+  );
+}
+
+function isLikelyRelativeScriptAssetPath(value) {
+  if (!isRelativeAssetPath(value)) {
+    return false;
+  }
+
+  if (/\s/.test(value)) {
+    return false;
+  }
+
+  if (value.startsWith("./") || value.startsWith("../")) {
+    return true;
+  }
+
+  if (/[\\/]/.test(value)) {
+    return true;
+  }
+
+  return /\.(?:css|gif|html?|ico|jpe?g|js|json|m4a|mp3|ogg|png|svg|wav|webm|webp|woff2?|ttf|otf|mp4)(?:[?#].*)?$/i.test(
+    value
+  );
 }
 
 async function replaceAsync(text, pattern, replacer) {
@@ -627,13 +653,19 @@ function guessMimeType(filename) {
       ".jpg": "image/jpeg",
       ".js": "text/javascript",
       ".json": "application/json",
+      ".m4a": "audio/mp4",
       ".mp3": "audio/mpeg",
+      ".mp4": "video/mp4",
       ".ogg": "audio/ogg",
+      ".otf": "font/otf",
       ".png": "image/png",
       ".svg": "image/svg+xml",
+      ".ttf": "font/ttf",
       ".wav": "audio/wav",
       ".webm": "video/webm",
       ".webp": "image/webp",
+      ".woff": "font/woff",
+      ".woff2": "font/woff2",
     }[ext] || "application/octet-stream"
   );
 }
@@ -738,13 +770,19 @@ function isSupportedPackageFile(path) {
     ".jpg",
     ".js",
     ".json",
+    ".m4a",
     ".mp3",
+    ".mp4",
     ".ogg",
+    ".otf",
     ".png",
     ".svg",
+    ".ttf",
     ".wav",
     ".webm",
     ".webp",
+    ".woff",
+    ".woff2",
   ].includes(extname(path));
 }
 
