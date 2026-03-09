@@ -140,7 +140,7 @@ async function handleLogin(req, res, requestUrl) {
   }
 
   const next = sanitizeNext(body.next || requestUrl.searchParams.get("next") || "/");
-  const cookie = createSessionCookie();
+  const cookie = createSessionCookie(requestUrl.protocol === "https:");
   sendJson(
     res,
     200,
@@ -162,7 +162,7 @@ async function handleLogout(req, res) {
       ok: true,
     },
     {
-      "Set-Cookie": clearSessionCookie(),
+      "Set-Cookie": clearSessionCookie(req.headers["x-forwarded-proto"] === "https"),
     }
   );
 }
@@ -310,6 +310,12 @@ async function handleAiAutoplay(req, res, requestUrl) {
     });
     const page = await context.newPage();
     const targetUrl = resolvePlayableUrl(payload.game.playableUrl, requestUrl);
+    if (!isAllowedAutoplayTarget(targetUrl, requestUrl)) {
+      return sendJson(res, 400, {
+        error:
+          "AI autoplay is restricted to games hosted on this same private site. Move the game into /games and open that hosted copy.",
+      });
+    }
     await authenticateAutoplayContext(context, targetUrl, requestUrl);
     await page.goto(targetUrl, {
       timeout: 30_000,
@@ -665,6 +671,17 @@ function resolvePlayableUrl(playableUrl, requestUrl) {
   return new URL(playableUrl, origin).toString();
 }
 
+function isAllowedAutoplayTarget(targetUrl, requestUrl) {
+  const appOrigin = `${requestUrl.protocol}//${requestUrl.host}`;
+
+  try {
+    const parsed = new URL(targetUrl);
+    return parsed.origin === appOrigin;
+  } catch {
+    return false;
+  }
+}
+
 async function authenticateAutoplayContext(context, targetUrl, requestUrl) {
   if (!hasAuthConfig()) {
     return;
@@ -851,9 +868,9 @@ function isAuthenticated(req) {
   return Number(payload.exp) > Date.now();
 }
 
-function createSessionCookie() {
+function createSessionCookie(isSecure = false) {
   const token = createSessionToken();
-  const secure = process.env.RENDER === "true" ? "; Secure" : "";
+  const secure = isSecure ? "; Secure" : "";
   return `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(sessionTtlMs / 1000)}${secure}`;
 }
 
@@ -868,8 +885,8 @@ function createSessionToken() {
   return `${payloadPart}.${signature}`;
 }
 
-function clearSessionCookie() {
-  const secure = process.env.RENDER === "true" ? "; Secure" : "";
+function clearSessionCookie(isSecure = false) {
+  const secure = isSecure ? "; Secure" : "";
   return `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`;
 }
 
@@ -989,7 +1006,13 @@ function readJsonBody(req) {
 function getClientKey(req) {
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.trim()) {
-    return forwarded.split(",")[0].trim();
+    const parts = forwarded
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length) {
+      return parts[parts.length - 1];
+    }
   }
   return req.socket.remoteAddress || "unknown";
 }
