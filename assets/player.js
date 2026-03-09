@@ -370,7 +370,7 @@ function summarizeGame(game) {
 function setAiBusy(isBusy, message) {
   if (elements.aiRunButton) {
     elements.aiRunButton.disabled = isBusy;
-    elements.aiRunButton.textContent = isBusy ? "Running..." : "Run AI Review";
+    elements.aiRunButton.textContent = isBusy ? "Running..." : "Run AI Player";
   }
   if (elements.aiStatus) {
     elements.aiStatus.textContent = message;
