@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arcade Grid</title>
+    <meta
+      name="description"
+      content="A GitHub Pages-ready arcade hub for your HTML games."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body class="catalog-page">
+    <div class="site-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">GitHub Pages Arcade Portal</p>
+          <h1>Drop in games. Ship your own Coolmath-style site.</h1>
+          <p class="hero-text">
+            Local HTML files and external GitHub Pages links can live in one
+            catalog. Every card opens a dedicated player tab with a fullscreen
+            button.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#library">Browse Games</a>
+            <a class="button button-secondary" href="#quick-start">How to add games</a>
+            <button id="logout-button" class="button button-secondary" type="button">
+              Log Out
+            </button>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="stat-card">
+            <span class="stat-label">Catalog</span>
+            <strong id="game-count">0 games</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Launch Mode</span>
+            <strong>New tab player</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Hosting</span>
+            <strong>Static GitHub Pages</strong>
+          </div>
+        </div>
+      </header>
+
+      <main id="library" class="library">
+        <section id="quick-start" class="quick-start">
+          <article class="quick-card">
+            <p class="eyebrow">Step 1</p>
+            <h2>Add local HTML files</h2>
+            <p>
+              Put a game in <code>games/your-game.html</code> or
+              <code>games/your-game/index.html</code>. Local files are the best
+              default for fullscreen and asset reliability.
+            </p>
+          </article>
+          <article class="quick-card">
+            <p class="eyebrow">Step 2</p>
+            <h2>Optional external links</h2>
+            <p>
+              Already hosting a game on GitHub Pages? Add that URL to
+              <code>data/external-games.json</code> and it will show up in the
+              same arcade.
+            </p>
+          </article>
+          <article class="quick-card">
+            <p class="eyebrow">Step 3</p>
+            <h2>Push to GitHub Pages</h2>
+            <p>
+              The included workflow regenerates the catalog and deploys the site
+              when you push to <code>main</code> or <code>master</code>.
+            </p>
+          </article>
+        </section>
+
+        <section class="upload-panel">
+          <div class="upload-copy">
+            <p class="eyebrow">Browser Uploads</p>
+            <h2>Drag a game package right onto the page.</h2>
+            <p class="section-copy">
+              This works for testing on the site itself. Drop a full game folder,
+              or an <code>index.html</code> plus its asset files, and the site
+              will save the package in your browser on this device.
+            </p>
+            <p class="upload-note">
+              Browser packages can now include nearby audio, image, CSS, and JS
+              files. If something is still missing, the upload will warn you
+              which referenced files were not included.
+            </p>
+          </div>
+          <div
+            id="upload-dropzone"
+            class="upload-dropzone"
+            role="button"
+            tabindex="0"
+            aria-describedby="upload-status"
+          >
+            <input
+              id="upload-input"
+              class="upload-input"
+              type="file"
+              accept=".html,.htm,text/html"
+              multiple
+            />
+            <input
+              id="upload-folder-input"
+              class="upload-input"
+              type="file"
+              webkitdirectory
+              directory
+              multiple
+            />
+            <strong>Drop a game folder or related files here</strong>
+            <span>or choose a single HTML file or a whole folder</span>
+            <div class="upload-actions">
+              <button id="browse-button" class="button button-primary" type="button">
+                Choose files
+              </button>
+              <button id="browse-folder-button" class="button button-secondary" type="button">
+                Choose folder
+              </button>
+              <button id="clear-uploads-button" class="button button-secondary" type="button">
+                Clear browser uploads
+              </button>
+            </div>
+            <p id="upload-status" class="upload-status">
+              No browser-uploaded games yet.
+            </p>
+          </div>
+        </section>
+
+        <section class="controls">
+          <label class="search-wrap" for="search-input">
+            <span class="search-label">Search</span>
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Search by title, tag, or description"
+              autocomplete="off"
+            />
+          </label>
+          <div class="chip-row" id="tag-filters" aria-label="Game filters"></div>
+        </section>
+
+        <section class="quick-launch">
+          <div class="player-library-head">
+            <div>
+              <p class="eyebrow">Quick Launch</p>
+              <h2>Scrollable Game Icons</h2>
+            </div>
+            <div class="section-actions">
+              <p class="section-copy">
+                Use the icon shelf for fast browsing, then open a full player tab.
+              </p>
+              <button id="edit-library-button" class="button button-secondary" type="button">
+                Edit Library
+              </button>
+            </div>
+          </div>
+          <div id="quick-launch-rail" class="icon-rail" aria-live="polite"></div>
+        </section>
+
+        <section class="section-heading">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2>Your games, one launcher.</h2>
+          </div>
+          <p class="section-copy" id="results-copy">
+            Loading the game manifest...
+          </p>
+        </section>
+
+        <section class="game-grid" id="game-grid" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <template id="game-card-template">
+      <article class="game-card">
+        <a class="game-link" target="_blank" rel="noreferrer">
+          <div class="game-art">
+            <div class="art-overlay"></div>
+            <span class="art-badge"></span>
+          </div>
+          <div class="game-body">
+            <div class="game-topline">
+              <h3 class="game-title"></h3>
+              <span class="source-pill"></span>
+            </div>
+            <p class="game-description"></p>
+            <div class="tag-list"></div>
+          </div>
+        </a>
+        <button class="delete-button" type="button" aria-label="Delete uploaded game">
+          ×
+        </button>
+      </article>
+    </template>
+
+    <template id="icon-tile-template">
+      <article class="icon-tile-shell">
+        <a class="icon-tile" target="_blank" rel="noreferrer">
+          <div class="icon-thumb">
+            <div class="art-overlay"></div>
+            <span class="art-badge"></span>
+          </div>
+          <div class="icon-copy">
+            <strong class="icon-title"></strong>
+            <span class="icon-source"></span>
+          </div>
+        </a>
+        <button class="delete-button icon-delete-button" type="button" aria-label="Delete uploaded game">
+          ×
+        </button>
+      </article>
+    </template>
+
+    <script type="module" src="./assets/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arcade Grid Player</title>
+    <meta
+      name="description"
+      content="Launch a single HTML game in a clean fullscreen-ready player."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body class="player-page">
+    <div class="player-shell">
+      <header class="player-header">
+        <a class="button button-secondary" href="./index.html">Back to arcade</a>
+        <div class="player-heading">
+          <p class="eyebrow">Game Player</p>
+          <h1 id="player-title">Loading...</h1>
+          <p id="player-description" class="player-description">
+            Pulling in the selected game.
+          </p>
+        </div>
+        <div class="player-actions">
+          <a
+            id="direct-link"
+            class="button button-secondary"
+            href="./index.html"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open direct
+          </a>
+          <button id="logout-button" class="button button-secondary" type="button">
+            Log Out
+          </button>
+          <button id="fullscreen-button" class="button button-primary" type="button">
+            Fullscreen
+          </button>
+        </div>
+      </header>
+
+      <main class="player-main">
+        <section class="player-stage">
+          <section class="player-frame-shell" id="player-frame-shell">
+            <div class="player-frame">
+              <iframe
+                id="game-frame"
+                title="Game player"
+                allow="fullscreen; autoplay; clipboard-read; clipboard-write"
+                allowfullscreen
+                loading="eager"
+              ></iframe>
+              <div id="player-message" class="player-message" hidden></div>
+            </div>
+          </section>
+
+          <aside class="player-sidebar">
+            <section class="player-panel">
+              <p class="eyebrow">Now Playing</p>
+              <div class="player-meta" id="player-meta"></div>
+              <p class="player-note" id="player-note">
+                Click inside the game once if it uses keyboard controls, then use
+                fullscreen for the cleanest play view.
+              </p>
+            </section>
+
+            <section class="player-panel">
+              <p class="eyebrow">Game Shelf</p>
+              <h2>More to play</h2>
+              <p class="player-description">
+                Scroll through your icon library and jump to another game without
+                leaving the player page.
+              </p>
+            </section>
+          </aside>
+        </section>
+
+        <section class="player-library">
+          <div class="player-library-head">
+            <div>
+              <p class="eyebrow">Library</p>
+              <h2>Play More Games</h2>
+            </div>
+            <p class="section-copy">
+              Inspired by the way Coolmath keeps more games one scroll away from
+              the active game screen.
+            </p>
+          </div>
+          <div id="related-rail" class="icon-rail" aria-live="polite"></div>
+        </section>
+
+        <section class="ai-panel">
+          <div class="player-library-head">
+            <div>
+              <p class="eyebrow">AI Playtester</p>
+              <h2>Run an AI Review</h2>
+            </div>
+            <p class="section-copy">
+              Sends the current game files plus a runtime snapshot to your local
+              Node server, which calls the OpenAI API using your server-side key.
+            </p>
+          </div>
+
+          <label class="ai-field" for="ai-focus-prompt">
+            <span class="search-label">Focus Prompt</span>
+            <textarea
+              id="ai-focus-prompt"
+              rows="5"
+              placeholder="Examples: check mobile controls, look for collision bugs, focus on missing audio, verify tutorial clarity."
+            ></textarea>
+          </label>
+
+          <div class="ai-actions">
+            <button id="ai-run-button" class="button button-primary" type="button">
+              Run AI Player
+            </button>
+            <span id="ai-status" class="upload-status">
+              The AI player uses your local server, not GitHub Pages.
+            </span>
+          </div>
+
+          <pre id="ai-output" class="ai-output">No AI play session has been run yet.</pre>
+        </section>
+      </main>
+    </div>
+
+    <template id="icon-tile-template">
+      <a class="icon-tile">
+        <div class="icon-thumb">
+          <div class="art-overlay"></div>
+          <span class="art-badge"></span>
+        </div>
+        <div class="icon-copy">
+          <strong class="icon-title"></strong>
+          <span class="icon-source"></span>
+        </div>
+      </a>
+    </template>
+
+    <script type="module" src="./assets/player.js"></script>
+  </body>
+</html>
