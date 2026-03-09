@@ -180,7 +180,15 @@ function handleUnauthenticated(req, res, requestUrl) {
 
 async function serveStatic(pathname, res, headOnly) {
   const safePath = pathname === "/" ? "/index.html" : pathname;
-  const filePath = path.resolve(rootDir, `.${safePath}`);
+  let decodedPath;
+
+  try {
+    decodedPath = decodeURIComponent(safePath);
+  } catch {
+    return sendJson(res, 400, { error: "Bad request." });
+  }
+
+  const filePath = path.resolve(rootDir, `.${decodedPath}`);
 
   if (!filePath.startsWith(rootDir)) {
     return sendJson(res, 403, { error: "Forbidden." });
