@@ -310,6 +310,7 @@ async function handleAiAutoplay(req, res, requestUrl) {
     });
     const page = await context.newPage();
     const targetUrl = resolvePlayableUrl(payload.game.playableUrl, requestUrl);
+    await authenticateAutoplayContext(context, targetUrl, requestUrl);
     await page.goto(targetUrl, {
       timeout: 30_000,
       waitUntil: "domcontentloaded",
@@ -664,6 +665,30 @@ function resolvePlayableUrl(playableUrl, requestUrl) {
   return new URL(playableUrl, origin).toString();
 }
 
+async function authenticateAutoplayContext(context, targetUrl, requestUrl) {
+  if (!hasAuthConfig()) {
+    return;
+  }
+
+  const appOrigin = `${requestUrl.protocol}//${requestUrl.host}`;
+  const targetOrigin = new URL(targetUrl).origin;
+  if (targetOrigin !== appOrigin) {
+    return;
+  }
+
+  await context.addCookies([
+    {
+      domain: requestUrl.hostname,
+      httpOnly: true,
+      name: sessionCookieName,
+      path: "/",
+      sameSite: "Strict",
+      secure: requestUrl.protocol === "https:",
+      value: createSessionToken(),
+    },
+  ]);
+}
+
 function buildLoginPage({ next }) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -827,6 +852,12 @@ function isAuthenticated(req) {
 }
 
 function createSessionCookie() {
+  const token = createSessionToken();
+  const secure = process.env.RENDER === "true" ? "; Secure" : "";
+  return `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(sessionTtlMs / 1000)}${secure}`;
+}
+
+function createSessionToken() {
   const payloadPart = Buffer.from(
     JSON.stringify({
       exp: Date.now() + sessionTtlMs,
@@ -834,9 +865,7 @@ function createSessionCookie() {
     })
   ).toString("base64url");
   const signature = signValue(payloadPart, process.env.SESSION_SECRET || "");
-  const token = `${payloadPart}.${signature}`;
-  const secure = process.env.RENDER === "true" ? "; Secure" : "";
-  return `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(sessionTtlMs / 1000)}${secure}`;
+  return `${payloadPart}.${signature}`;
 }
 
 function clearSessionCookie() {
