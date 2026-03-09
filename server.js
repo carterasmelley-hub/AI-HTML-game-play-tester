@@ -39,7 +39,7 @@ validateStartupConfig();
 
 const server = http.createServer(async (req, res) => {
   try {
-    const requestUrl = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
+    const requestUrl = getRequestUrl(req);
     const pathname = requestUrl.pathname;
 
     if (pathname === "/healthz") {
@@ -57,7 +57,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === "/api/logout" && req.method === "POST") {
-      return handleLogout(req, res);
+      return handleLogout(req, res, requestUrl);
     }
 
     if (!isAuthenticated(req)) {
@@ -154,7 +154,7 @@ async function handleLogin(req, res, requestUrl) {
   );
 }
 
-async function handleLogout(req, res) {
+async function handleLogout(req, res, requestUrl) {
   sendJson(
     res,
     200,
@@ -162,9 +162,22 @@ async function handleLogout(req, res) {
       ok: true,
     },
     {
-      "Set-Cookie": clearSessionCookie(req.headers["x-forwarded-proto"] === "https"),
+      "Set-Cookie": clearSessionCookie(requestUrl.protocol === "https:"),
     }
   );
+}
+
+function getRequestUrl(req) {
+  const protoHeader = req.headers["x-forwarded-proto"];
+  const hostHeader = req.headers["x-forwarded-host"] || req.headers.host || "127.0.0.1";
+  const protocol = typeof protoHeader === "string" && protoHeader.trim()
+    ? `${protoHeader.split(",")[0].trim()}:`
+    : "http:";
+  const host = typeof hostHeader === "string" && hostHeader.trim()
+    ? hostHeader.split(",")[0].trim()
+    : "127.0.0.1";
+
+  return new URL(req.url || "/", `${protocol}//${host}`);
 }
 
 function handleUnauthenticated(req, res, requestUrl) {
