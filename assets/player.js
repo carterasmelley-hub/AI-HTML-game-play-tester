@@ -69,7 +69,7 @@ async function bootstrap() {
   elements.frame?.addEventListener("load", handleFrameLoad, { once: true });
 
   if (currentGame.embed === false) {
-    elements.directLink.href = currentGame.directUrl;
+    elements.directLink.href = getPlayableUrl(currentGame);
     showMessage(
       "This game is set to open directly instead of inside the player. Use the direct button above."
     );
@@ -83,10 +83,11 @@ async function bootstrap() {
     elements.directLink.textContent = "Open uploaded game";
     elements.frame.src = uploadHandle.url;
   } else {
-    elements.directLink.href = currentGame.directUrl;
+    const playableUrl = getPlayableUrl(currentGame);
+    elements.directLink.href = playableUrl;
     elements.directLink.textContent =
       currentGame.sourceType === "external" ? "Open external page" : "Open raw game";
-    elements.frame.src = currentGame.directUrl;
+    elements.frame.src = playableUrl;
   }
 
   elements.frame.hidden = false;
@@ -206,7 +207,7 @@ async function runAiReview() {
         focusPrompt: elements.aiPrompt?.value?.trim() || "",
         game: {
           ...summarizeGame(currentGame),
-          playableUrl: currentGame.directUrl,
+          playableUrl: getPlayableUrl(currentGame),
         },
         runtime,
         maxSteps: 8,
@@ -294,7 +295,7 @@ async function collectGameFiles(game) {
 }
 
 async function collectLocalGameFiles(game) {
-  const entryUrl = new URL(game.directUrl, window.location.href);
+  const entryUrl = new URL(getPlayableUrl(game));
   const html = await fetchText(entryUrl);
   const files = [
     {
@@ -365,6 +366,37 @@ function summarizeGame(game) {
     tags: game.tags || [],
     title: game.title,
   };
+}
+
+function getPlayableUrl(game) {
+  const directUrl = String(game?.directUrl || "");
+  if (!directUrl) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(directUrl)) {
+    return directUrl;
+  }
+
+  return new URL(encodeRelativeUrlPath(directUrl), window.location.href).toString();
+}
+
+function encodeRelativeUrlPath(value) {
+  const [pathPart, suffix = ""] = value.split(/([?#].*)/, 2);
+  const encodedPath = pathPart
+    .split("/")
+    .map((segment) => encodeURIComponent(decodeURIComponentSafe(segment)))
+    .join("/");
+
+  return `${encodedPath}${suffix}`;
+}
+
+function decodeURIComponentSafe(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function setAiBusy(isBusy, message) {
