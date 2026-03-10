@@ -228,7 +228,10 @@ async function runAiReview() {
     if (elements.aiOutput) {
       elements.aiOutput.textContent = String(error.message || error);
     }
-    setAiBusy(false, "AI player failed. Make sure you are running `npm run dev`, Playwright is installed, and your OpenAI key is in the server environment.");
+    setAiBusy(
+      false,
+      "AI player failed. Check the Render logs for the latest autoplay error and confirm Playwright plus your OpenAI key are available on the server."
+    );
   }
 }
 
