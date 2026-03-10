@@ -716,12 +716,11 @@ async function authenticateAutoplayContext(context, targetUrl, requestUrl) {
 
   await context.addCookies([
     {
-      domain: requestUrl.hostname,
       httpOnly: true,
       name: sessionCookieName,
-      path: "/",
       sameSite: "Strict",
       secure: requestUrl.protocol === "https:",
+      url: appOrigin,
       value: createSessionToken(),
     },
   ]);
