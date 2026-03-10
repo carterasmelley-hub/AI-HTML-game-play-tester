@@ -428,11 +428,6 @@ function buildReviewPrompt(payload) {
 }
 
 async function capturePageObservation(page) {
-  const screenshot = await page.screenshot({
-    fullPage: false,
-    type: "png",
-  });
-
   const domState = await page.evaluate(() => {
     const visible = (element) => {
       const rect = element.getBoundingClientRect();
@@ -483,7 +478,7 @@ async function capturePageObservation(page) {
 
   return {
     domState,
-    screenshotBase64: screenshot.toString("base64"),
+    screenshotBase64: null,
   };
 }
 
