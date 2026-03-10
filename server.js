@@ -498,14 +498,11 @@ async function chooseNextAction(payload) {
     body: JSON.stringify({
       model,
       temperature: 0.2,
-      response_format: {
-        type: "json_object",
-      },
       messages: [
         {
           role: "system",
           content:
-            "You are controlling a browser to play and test an HTML game. Return JSON only. Choose one next action that is most useful for exploration or validation. Prefer interacting with visible menu buttons first, then focus the canvas/game area, then use keyboard inputs. If you have enough evidence, return action=finish.",
+            "You are controlling a browser to play and test an HTML game. Return one compact JSON object only, with no markdown or code fences. Choose one next action that is most useful for exploration or validation. Prefer interacting with visible menu buttons first, then focus the game canvas, then use keyboard inputs. If you have enough evidence, return action=finish.",
         },
         {
           role: "user",
@@ -521,7 +518,7 @@ async function chooseNextAction(payload) {
 
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content?.trim() || "{}";
-  const parsed = JSON.parse(raw);
+  const parsed = parseJsonObject(raw);
 
   return {
     action: parsed.action || "finish",
@@ -531,6 +528,31 @@ async function chooseNextAction(payload) {
     targetIndex: Number.isFinite(parsed.targetIndex) ? parsed.targetIndex : -1,
     waitMs: clampNumber(parsed.waitMs, 200, 4000, 1000),
   };
+}
+
+function parseJsonObject(raw) {
+  const trimmed = String(raw || "").trim();
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {}
+
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch) {
+    try {
+      return JSON.parse(fencedMatch[1].trim());
+    } catch {}
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+    } catch {}
+  }
+
+  throw new Error(`AI action response was not valid JSON: ${trimmed.slice(0, 400)}`);
 }
 
 function buildActionPrompt(payload) {
