@@ -594,20 +594,23 @@ async function executeAction(page, actionPlan, observation) {
   }
 
   if (actionPlan.action === "press_key") {
-    if (!actionPlan.key) {
+    const normalizedKey = normalizeActionKey(actionPlan.key);
+    if (!normalizedKey) {
       return {
         ok: false,
-        result: "No key was supplied.",
+        result: actionPlan.key
+          ? `Unsupported key "${actionPlan.key}" was supplied.`
+          : "No key was supplied.",
       };
     }
 
-    await page.keyboard.down(actionPlan.key);
+    await page.keyboard.down(normalizedKey);
     await page.waitForTimeout(actionPlan.holdMs);
-    await page.keyboard.up(actionPlan.key);
+    await page.keyboard.up(normalizedKey);
     await page.waitForTimeout(actionPlan.waitMs);
     return {
       ok: true,
-      result: `Pressed ${actionPlan.key} for ${actionPlan.holdMs}ms`,
+      result: `Pressed ${normalizedKey} for ${actionPlan.holdMs}ms`,
     };
   }
 
@@ -623,6 +626,33 @@ async function executeAction(page, actionPlan, observation) {
     ok: true,
     result: "Finished action loop.",
   };
+}
+
+function normalizeActionKey(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const normalized = raw.toLowerCase();
+  const allowedKeys = {
+    arrowup: "ArrowUp",
+    arrowdown: "ArrowDown",
+    arrowleft: "ArrowLeft",
+    arrowright: "ArrowRight",
+    space: "Space",
+    enter: "Enter",
+    escape: "Escape",
+    keyz: "KeyZ",
+    keyx: "KeyX",
+    keyc: "KeyC",
+    keya: "KeyA",
+    keyd: "KeyD",
+    keyw: "KeyW",
+    keys: "KeyS",
+  };
+
+  return allowedKeys[normalized] || "";
 }
 
 async function summarizeAutoplay(payload) {
